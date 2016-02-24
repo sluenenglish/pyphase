@@ -1,1 +1,1 @@
-from .model import phase_model
+from .model import PhaseModel
