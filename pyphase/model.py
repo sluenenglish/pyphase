@@ -22,9 +22,18 @@ class PhaseModel(object):
     def _cdf(self, y):  
         return 1 - self.initial_state.dot(expm(self.phase_type_generator * y)).dot(self.e).reshape(-1)
 
-    def sample(self, n=1):
-        return np.array([pinv(np.matrix(self.phase_type_generator)).dot(logm( (pinv(np.matrix(self.initial_state)) * (1-random())).dot(pinv(np.matrix(self.e))) ))[0][0] for i in range(n)])
-    
+    def sample(self): 
+        s = 0
+        for i in range(self.phases - 1):
+            total_transition_rate = self.phase_type_generator[i, i + 1] + self.exit_rate_vector[i]
+            time_until_transition = np.random.exponential(1 / total_transition_rate)
+            s += time_until_transition
+            if random() < self.exit_rate_vector[i] / total_transition_rate:
+                return s
+        time_until_transition = np.random.exponential(1 / self.exit_rate_vector[-1])
+        s += time_until_transition
+        return s
+        
     def log_likelyhood(self, data):
         probs = self.pdf(data)
         log_prob = np.log(probs[~np.isnan(probs)])
